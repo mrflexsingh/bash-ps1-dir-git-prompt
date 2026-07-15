@@ -5,6 +5,3 @@ Line 3 - Cursor prompt
 
 Example:
 
-╔══[ flexsingh@SINGH-LAPTOP ]══[ ~/personal-git/bash-ps1-dir-git-prompt ]
-╚══[ ■ git:main ]
-╚══▶
