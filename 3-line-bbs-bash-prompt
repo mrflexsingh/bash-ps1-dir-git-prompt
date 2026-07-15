@@ -1,0 +1,76 @@
+# ==========================================
+# CUSTOM 3-LINE RETRO BBS PROMPT CONFIG
+# ==========================================
+
+get_git_branch() {
+  local branch
+  if branch=$(git symbolic-ref --short HEAD 2>/dev/null); then
+    echo "■ git:$branch"
+  elif branch=$(git rev-parse --short HEAD 2>/dev/null); then
+    echo "■ git:$branch"
+  fi
+}
+
+manage_my_prompt() {
+    local GIT_BR=$(get_git_branch)
+    local target_1="/opt/prod"
+    local target_2="/opt/dev"
+
+    # --- Your Original Colors ---
+    local BLUE_USER='\[\e[38;2;85;147;255m\]'
+    local BLUE_PATH='\[\e[38;5;39m\]'
+    local ORANGE_GIT='\[\e[38;5;208m\]'
+    local RESET='\[\e[0m\]'
+
+    # --- Your Custom BBS Line Color (#F7D01F) ---
+    local FRAME='\[\e[38;2;247;208;31m\]'
+
+    # Handle the second and third lines dynamically based on Git status
+    local BOTTOM_LINES
+    if [[ -n "$GIT_BR" ]]; then
+        # Line 2: Show Git Branch capsule
+        # Line 3: Drop down to show Arrow
+        BOTTOM_LINES="${FRAME}╚══[ ${ORANGE_GIT}${GIT_BR}${FRAME} ]\n${FRAME}╚══${RESET}▶"
+    else
+        # When NOT in Git: Skip Line 2 entirely and put the Arrow directly on Line 2
+        BOTTOM_LINES="${FRAME}╚══${RESET}▶"
+    fi
+
+    # Handle Chroot integration if present
+    local CHROOT_PREFIX='${debian_chroot:+($debian_chroot)}'
+
+    if [[ "$PWD" == "$target_1"* ]]; then
+        local PROD_TAG='\[\e[31;1;5m\][PROD]\[\e[m\]'
+
+        export PS1="\n${FRAME}╔══[ ${BLUE_USER}${CHROOT_PREFIX}\u@\h ${FRAME}]══[ ${BLUE_PATH}\w ${FRAME}]══ ${PROD_TAG}\n${BOTTOM_LINES} "
+
+        if [ "$LAST_DIR_STATE" != "PROD" ]; then
+            echo -e "\e[31;1;5m"
+            echo "---------------------------------------------"
+            echo "      YOU ARE IN THE PRODUCTION DIRECTORY     "
+            echo "---------------------------------------------"
+            echo -e "\e[0m"
+            export LAST_DIR_STATE="PROD"
+        fi
+
+    elif [[ "$PWD" == "$target_2"* ]]; then
+        local DEV_TAG='\[\e[33;5m\][DEV]\[\e[0m\]'
+
+        export PS1="\n${FRAME}╔══[ ${BLUE_USER}${CHROOT_PREFIX}\u@\h ${FRAME}]══[ ${BLUE_PATH}\w ${FRAME}]══ ${DEV_TAG}\n${BOTTOM_LINES} "
+
+        if [ "$LAST_DIR_STATE" != "DEV" ]; then
+            echo -e "\e[33;1m"
+            echo "---------------------------------------------"
+            echo "      YOU ARE IN THE DEVELOPMENT DIRECTORY   "
+            echo "---------------------------------------------"
+            echo -e "\e[0m"
+            export LAST_DIR_STATE="DEV"
+        fi
+
+    else
+        export PS1="\n${FRAME}╔══[ ${BLUE_USER}${CHROOT_PREFIX}\u@\h ${FRAME}]══[ ${BLUE_PATH}\w ${FRAME}]\n${BOTTOM_LINES} "
+        export LAST_DIR_STATE="NONE"
+    fi
+}
+
+export PROMPT_COMMAND=manage_my_prompt
